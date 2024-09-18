@@ -8,7 +8,7 @@ namespace Stryker.Core.TestRunners.VsTest
 {
     public sealed class VsTestDescription
     {
-        private readonly ICollection<TestResult> _initialResults = new List<TestResult>();
+        public ICollection<TestResult> InitialResults { get; } = new List<TestResult>();
         private int _subCases;
 
         public VsTestDescription(TestCase testCase)
@@ -38,10 +38,10 @@ namespace Stryker.Core.TestRunners.VsTest
                 if (Framework == TestFrameworks.xUnit)
                 {
                     // xUnit returns the run time for the case within each result, so the first one is sufficient
-                    return _initialResults.FirstOrDefault()?.Duration ?? TimeSpan.Zero;
+                    return InitialResults.FirstOrDefault()?.Duration ?? TimeSpan.Zero;
                 }
 
-                return TimeSpan.FromTicks(_initialResults.Sum(t => t.Duration.Ticks));
+                return TimeSpan.FromTicks(InitialResults.Sum(t => t.Duration.Ticks));
             }
         }
 
@@ -49,12 +49,12 @@ namespace Stryker.Core.TestRunners.VsTest
 
         public TestCase Case { get; }
 
-        public int NbSubCases => Math.Max(_subCases, _initialResults.Count);
+        public int NbSubCases => Math.Max(_subCases, InitialResults.Count);
 
-        public void RegisterInitialTestResult(TestResult result) => _initialResults.Add(result);
+        public void RegisterInitialTestResult(TestResult result) => InitialResults.Add(result);
 
         public void AddSubCase() => _subCases++;
 
-        public void ClearInitialResult() => _initialResults.Clear();
+        public void ClearInitialResult() => InitialResults.Clear();
     }
 }
