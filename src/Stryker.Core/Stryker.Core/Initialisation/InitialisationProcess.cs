@@ -26,7 +26,7 @@ public interface IInitialisationProcess
     void BuildProjects(StrykerOptions options, IEnumerable<SourceProjectInfo> projects);
 
     IReadOnlyCollection<MutationTestInput> GetMutationTestInputs(StrykerOptions options,
-        IReadOnlyCollection<SourceProjectInfo> projects, ITestRunner runner);
+        IReadOnlyCollection<SourceProjectInfo> projects, ITestRunner runner, bool? throwIfFails = null);
 }
 
 public class InitialisationProcess : IInitialisationProcess
@@ -104,9 +104,10 @@ public class InitialisationProcess : IInitialisationProcess
     }
 
         public IReadOnlyCollection<MutationTestInput> GetMutationTestInputs(StrykerOptions options,
-            IReadOnlyCollection<SourceProjectInfo> projects, ITestRunner runner)
+            IReadOnlyCollection<SourceProjectInfo> projects, ITestRunner runner, bool? throwIfFails = null)
     {
         var result = new List<MutationTestInput>();
+        throwIfFails ??= projects.Count == 1;
         foreach (var info in projects)
         {
             result.Add(new MutationTestInput
@@ -114,7 +115,7 @@ public class InitialisationProcess : IInitialisationProcess
                 SourceProjectInfo = info,
                 TestProjectsInfo = info.TestProjectsInfo,
                 TestRunner = runner,
-                    InitialTestRun = InitialTest(options, info, runner, projects.Count == 1)
+                    InitialTestRun = InitialTest(options, info, runner, throwIfFails.Value)
             });
         }
 
