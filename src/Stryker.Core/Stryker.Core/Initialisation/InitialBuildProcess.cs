@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Stryker.Core.Exceptions;
 using Stryker.Core.Logging;
@@ -65,6 +66,7 @@ public class InitialBuildProcess : IInitialBuildProcess
         CheckBuildResult(result, target, exe, args);
     }
 
+    [DebuggerStepThrough]
     private void CheckBuildResult(ProcessResult result, string path, string buildCommand, string options)
     {
         if (result.ExitCode != ExitCodes.Success)
