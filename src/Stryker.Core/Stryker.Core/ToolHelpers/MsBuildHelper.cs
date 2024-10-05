@@ -76,6 +76,7 @@ public class MsBuildHelper
         var (exe, command) = usingMsBuild ? GetMsBuildExeAndCommand() : ("dotnet", "build");
 
         List<string> fullOptions =  string.IsNullOrEmpty(command) ? [QuotesIfNeeded(projectFile)] : [command, QuotesIfNeeded(projectFile)];
+        fullOptions.AddRange(["/verbosity:quiet", "/property:WarningLevel=0"]);
         if (!string.IsNullOrEmpty(configuration))
         {
             fullOptions.Add(usingMsBuild ? $"/property:Configuration={QuotesIfNeeded(configuration)}" : $"-c {QuotesIfNeeded(configuration)}");
