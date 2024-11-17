@@ -10,7 +10,8 @@ namespace Stryker.Core.Initialisation;
 
 public interface IInitialBuildProcess
 {
-    void InitialBuild(bool fullFramework, string projectPath, string solutionPath, string configuration = null,
+    InputException InitialBuild(bool fullFramework, string projectPath, string solutionPath,
+        string configuration = null,
         string msbuildPath = null);
 }
 
@@ -27,7 +28,8 @@ public class InitialBuildProcess : IInitialBuildProcess
         _logger = ApplicationLogging.LoggerFactory.CreateLogger<InitialBuildProcess>();
     }
 
-    public void InitialBuild(bool fullFramework, string projectPath, string solutionPath, string configuration = null,
+    public InputException InitialBuild(bool fullFramework, string projectPath, string solutionPath,
+        string configuration = null,
         string msbuildPath = null)
     {
         if (fullFramework && string.IsNullOrEmpty(solutionPath))
@@ -66,19 +68,20 @@ public class InitialBuildProcess : IInitialBuildProcess
             //TODO If this fails too, use the original, it's probably got better detail
         }
 
-        CheckBuildResult(result, target, exe, args);
+        return CheckBuildResult(result, target, exe, args);
     }
 
-    private void CheckBuildResult(ProcessResult result, string path, string buildCommand, string options)
+    private InputException CheckBuildResult(ProcessResult result, string path, string buildCommand, string options)
     {
         if (result.ExitCode != ExitCodes.Success)
         {
             _logger.LogError("Initial build failed. Command was [{exe} {args}] (in folder '{folder}'). Reult: {Result}", buildCommand, options, path, result.Output);
             // Initial build failed
-            throw new InputException(result.Output, FormatBuildResultErrorString(buildCommand, options));
+            return new InputException(result.Output, FormatBuildResultErrorString(buildCommand, options));
         }
         _logger.LogTrace("Initial build output {Result}", result.Output);
         _logger.LogDebug("Initial build successful");
+        return null;
     }
 
     private static string FormatBuildResultErrorString(string buildCommand, string options) =>

@@ -22,7 +22,7 @@ public interface IInitialisationProcess
     /// <returns>an enumeration of <see cref="SourceProjectInfo"/>, one for each found project (if any).</returns>
     IReadOnlyCollection<SourceProjectInfo> GetMutableProjectsInfo(IStrykerOptions options);
 
-    void BuildProjects(IStrykerOptions options, IEnumerable<SourceProjectInfo> projects);
+    InputException BuildProjects(IStrykerOptions options, IEnumerable<SourceProjectInfo> projects);
 
     IReadOnlyCollection<MutationTestInput> GetMutationTestInputs(IStrykerOptions options,
         IReadOnlyCollection<SourceProjectInfo> projects, ITestRunner runner, bool? throwIfFails = null);
@@ -62,7 +62,7 @@ public class InitialisationProcess : IInitialisationProcess
     }
 
     /// <inheritdoc/>
-    public void BuildProjects(IStrykerOptions options, IEnumerable<SourceProjectInfo> projects)
+    public InputException BuildProjects(IStrykerOptions options, IEnumerable<SourceProjectInfo> projects)
     {
         if (options.IsSolutionContext)
         {
@@ -70,10 +70,11 @@ public class InitialisationProcess : IInitialisationProcess
             // Build the complete solution
             _logger.LogInformation("Building solution {0}",
                     Path.GetRelativePath(options.WorkingDirectory, options.SolutionPath));
-            _initialBuildProcess.InitialBuild(
+            var e = _initialBuildProcess.InitialBuild(
                 framework,
                 _inputFileResolver.FileSystem.Path.GetDirectoryName(options.SolutionPath),
                 options.SolutionPath, options.Configuration, options.MsBuildPath);
+            if (e is { }) return e;
         }
         else
         {
@@ -86,12 +87,13 @@ public class InitialisationProcess : IInitialisationProcess
                     testProjects[i].ProjectFilePath, i + 1,
                     testProjects.Count);
 
-                _initialBuildProcess.InitialBuild(
+                var e = _initialBuildProcess.InitialBuild(
                     testProjects[i].TargetsFullFramework(),
                     testProjects[i].ProjectFilePath,
                     options.SolutionPath,
                     options.Configuration,
                     options.MsBuildPath ?? testProjects[i].MsBuildPath());
+                if (e is { }) return e;
             }
         }
 
@@ -100,6 +102,8 @@ public class InitialisationProcess : IInitialisationProcess
         {
             project.OnProjectBuilt?.Invoke();
         }
+
+        return null;
     }
 
     public IReadOnlyCollection<MutationTestInput> GetMutationTestInputs(IStrykerOptions options,
