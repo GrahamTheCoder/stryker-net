@@ -16,11 +16,13 @@ public interface IInitialBuildProcess
 
 public class InitialBuildProcess : IInitialBuildProcess
 {
+    private readonly bool _allowFrameworkFallback;
     private readonly IProcessExecutor _processExecutor;
     private readonly ILogger _logger;
 
-    public InitialBuildProcess(IProcessExecutor processExecutor = null)
+    public InitialBuildProcess(IProcessExecutor processExecutor = null, bool allowFrameworkFallback = false)
     {
+        _allowFrameworkFallback = allowFrameworkFallback;
         _processExecutor = processExecutor ?? new ProcessExecutor();
         _logger = ApplicationLogging.LoggerFactory.CreateLogger<InitialBuildProcess>();
     }
@@ -42,7 +44,7 @@ public class InitialBuildProcess : IInitialBuildProcess
         var directoryName = Path.GetDirectoryName(target);
         var (result, exe, args) = msBuildHelper.BuildProject(directoryName, buildPath, fullFramework, configuration);
 
-        if (result.ExitCode != ExitCodes.Success && !string.IsNullOrEmpty(solutionPath))
+        if (_allowFrameworkFallback && result.ExitCode != ExitCodes.Success && !string.IsNullOrEmpty(solutionPath))
         {
             // dump previous build result
             _logger.LogTrace("Initial build output: {0}", result.Output);
@@ -61,6 +63,7 @@ public class InitialBuildProcess : IInitialBuildProcess
                 buildPath,
                 true,
                 configuration);
+            //TODO If this fails too, use the original, it's probably got better detail
         }
 
         CheckBuildResult(result, target, exe, args);
